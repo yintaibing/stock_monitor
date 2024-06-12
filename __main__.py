@@ -88,28 +88,28 @@ def main() -> None:
   live_print: Live = prepare_live_print()
   data_store.market_open = True
   while data_store.market_open:
-      try:
-          t_req_start = check_market_open(data_store)
-          stock_info_content = get_stock_infos(full_codes, proxy)
-          if not stock_info_content:
-            continue
+    try:
+        t_req_start = check_market_open(data_store)
+        stock_info_content = get_stock_infos(full_codes, proxy)
+        if not stock_info_content:
+          continue
 
-          t_req_end = datetime.datetime.today()
-          data_store.network_latency = (t_req_end - t_req_start).total_seconds()
+        t_req_end = datetime.datetime.today()
+        data_store.network_latency = (t_req_end - t_req_start).total_seconds()
 
-          parse_stock_infos(local, data_store, stock_info_content)
-          print_stocks(live_print, data_store)
-          
-          if data_store.market_open:
-            t_next_req = datetime.datetime.fromtimestamp(
-              t_req_start.timestamp() + data_store.interval_seconds)
-            if t_req_end < t_next_req:
-              time.sleep((t_next_req - t_req_end).total_seconds())
-      except KeyboardInterrupt:
-        data_store.market_open = False
-      except Exception:
-        traceback.print_exc()
-        data_store.market_open = False
+        parse_stock_infos(local, data_store, stock_info_content)
+        print_stocks(live_print, data_store)
+        
+        if data_store.market_open:
+          t_next_req = datetime.datetime.fromtimestamp(
+            t_req_start.timestamp() + data_store.interval_seconds)
+          if t_req_end < t_next_req:
+            time.sleep((t_next_req - t_req_end).total_seconds())
+    except KeyboardInterrupt:
+      data_store.market_open = False
+    except Exception:
+      traceback.print_exc()
+      data_store.market_open = False
 
 # run
 if __name__ == "__main__":
