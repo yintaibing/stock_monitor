@@ -14,10 +14,10 @@
 - 用任意命令行终端运行本仓库即可，比如Windows的cmd或Powershell。
 
 ### Config.json
-- `proxy`: 如果担心公司抓包，可连接代理转移网络流量，否则请删除、留空白。
+- `proxy`: **如果担心公司抓包，可连接代理转移网络流量，否则请删除、留空白**。
 - `eastmoney`: 东财网页版的配置项，用来获取你的东财账号的自选股，暂未实现。
 - `colorize`: 涨跌幅是否区分红绿着色。
 - `interval_seconds`: 请求间隔，单位秒，支持小数，请求太频繁可能被远端屏蔽。
-- `market_indices`: 市场主要指数，代码必须加sh/sz/bj前缀，名字将缩略只展示首汉字。
+- `market_indices`: 市场主要指数，代码**必须**加sh/sz/bj前缀，名字将缩略只展示首汉字。
 - `local_stock_groups`: 本地配置个股和分组。
 - `stock_name_hidings`: 个股名称隐藏，尽量减少被路人发现。
