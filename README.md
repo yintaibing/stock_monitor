@@ -10,7 +10,7 @@
 
 ### Usage
 - 需要Python 3, 并且先`pip install`安装`requests`, `requests[socks]`, `rich`三个库。
-- 编辑`local.json`中的`local_stock_groups`，个股代码的sh/sz/bj前缀建议加、也可不加。
+- 编辑`local.json`中的`stock_groups`，个股代码的sh/sz/bj前缀建议加、也可不加。
 - 用任意命令行终端运行本仓库即可，比如Windows的cmd或Powershell。
 
 ### config.json 
