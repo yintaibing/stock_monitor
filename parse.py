@@ -4,13 +4,12 @@ from models import *
 
 # parse stock groups from local
 def parse_stock_groups_from_local(cfg: dict) -> list:
-  stock_groups = []
-  local_stock_groups: list = cfg["local_stock_groups"]
-  for item in local_stock_groups:
-    if isinstance(item, list) and len(item) > 0:
-      group = StockGroup(name=item[0], stock_codes=item[1:] if len(item) > 1 else [])
-      stock_groups.append(group)
-  return stock_groups
+  groups = []
+  m: dict = cfg["stock_groups"]
+  for name, stock_codes in m.items():
+    if isinstance(stock_codes, list) and len(stock_codes) > 0:
+      groups.append(StockGroup(name=name, stock_codes=stock_codes))
+  return groups
 
 
 # get stock info
@@ -32,23 +31,13 @@ def hide_stock_name(cfg: dict, name: str) -> str:
   hidings: dict = cfg["stock_name_hidings"]
   for k, v in hidings.items():
     key = str(k).strip()
-    value = str(v).strip()
-    if len(key) > 0 and len(value) > 0:
-      if key.startswith("*"):
-        key = key[1:]
-        if name.endswith(key):
-          return name.replace(key, value)
-      elif key.endswith("*"):
-        key = key[:-1]
-        if name.startswith(key):
-          return name.replace(key, value)
-      elif name.count(key) > 0:
-        return name.replace(key, value)
+    if len(key) > 0 and name.count(key) > 0:
+      return name.replace(key, str(v).strip())
   return name
 
 
 # parse stock info
-def parse_stock_infos(cfg: dict, data_store: DataStore, content: str) -> None:
+def parse_stock_infos(local: dict, data_store: DataStore, content: str) -> None:
   stock_infos = content.split(";")
   stock: Stock
   for i in range(len(stock_infos)):
@@ -72,7 +61,7 @@ def parse_stock_infos(cfg: dict, data_store: DataStore, content: str) -> None:
 
     if stock:
       if not stock.name:
-        stock.name = hide_stock_name(cfg, items[1])
+        stock.name = hide_stock_name(local, items[1])
         stock.last_day_price = float(items[4])
       stock.price = float(items[3])
       stock.amplitude = float(items[32])

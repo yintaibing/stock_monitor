@@ -11,10 +11,10 @@ from print import prepare_live_print, print_stocks
 import utils
 
 # load stocks.json
-def load_config_json() -> dict | None:
+def load_json_file(file_name: str) -> dict | None:
   self_dir = os.path.dirname(os.path.abspath(__file__))
   try:
-    with open(os.path.join(self_dir, "config.json"), "r", encoding="utf-8") as f:
+    with open(os.path.join(self_dir, file_name), "r", encoding="utf-8") as f:
       return json.load(f)
   except Exception as e:
       print("config.json load error")
@@ -42,8 +42,9 @@ def check_market_open(data_store: DataStore) -> datetime.datetime:
 
 # main
 def main() -> None:
-  cfg: dict = load_config_json()
-  if not cfg:
+  cfg: dict = load_json_file("config.json")
+  local: dict = load_json_file("local.json")
+  if not (cfg and local):
     return
 
   proxy = cfg["proxy"]
@@ -57,9 +58,9 @@ def main() -> None:
     print(eastmoney)
     return
   else:
-    data_store.stock_groups = parse_stock_groups_from_local(cfg)
+    data_store.stock_groups = parse_stock_groups_from_local(local)
 
-  for code in cfg["market_indices"]:
+  for code in local["market_indices"]:
     if utils.verify_stock_code(code, is_market_index=True):
       data_store.market_indices.stocks.append(Stock(code))
     else:
@@ -96,7 +97,7 @@ def main() -> None:
           t_req_end = datetime.datetime.today()
           data_store.network_latency = (t_req_end - t_req_start).total_seconds()
 
-          parse_stock_infos(cfg, data_store, stock_info_content)
+          parse_stock_infos(local, data_store, stock_info_content)
           print_stocks(live_print, data_store)
           
           if data_store.market_open:
