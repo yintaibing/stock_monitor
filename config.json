@@ -8,7 +8,8 @@
     "appkey": "todo",
     "cookie": "todo"
   },
-  "interval_seconds": 4,
+  "colorize": false,
+  "interval_seconds": 3,
   "market_indices": ["sh000001", "sz399001", "sz399006", "sh000688"],
   "local_stock_groups": [
     [
@@ -20,7 +21,8 @@
     ], [
       "分组二",
       "sh601136",
-      "sz002594"
+      "sz002594",
+      "sh600941"
     ]
   ],
   "stock_name_hidings": {
@@ -28,6 +30,7 @@
     "*科技": "K技",
     "*证券": "Z券",
     "*电子": "D子",
-    "中国*": "中G"
+    "中国*": "ZG",
+    "比亚迪": "BYD"
   }
 }

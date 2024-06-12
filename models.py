@@ -32,5 +32,7 @@ class DataStore:
     self.all_stocks: list = None
     self.market_indices: StockGroup = StockGroup("market", None)
     self.stock_groups: list = None
+
+    self.colorize: bool = True
     self.interval_seconds: float = 0
     self.network_latency: float = 0

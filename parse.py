@@ -42,6 +42,8 @@ def hide_stock_name(cfg: dict, name: str) -> str:
         key = key[:-1]
         if name.startswith(key):
           return name.replace(key, value)
+      elif name.count(key) > 0:
+        return name.replace(key, value)
   return name
 
 
