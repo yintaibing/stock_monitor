@@ -17,8 +17,8 @@ def load_config_json() -> dict | None:
     with open(os.path.join(self_dir, "config.json"), "r", encoding="utf-8") as f:
       return json.load(f)
   except Exception as e:
-      print("stocks.json load error")
-      print(e)
+      print("config.json load error")
+      traceback.print_exc()
   return None
 
 
@@ -43,6 +43,9 @@ def check_market_open(data_store: DataStore) -> datetime.datetime:
 # main
 def main() -> None:
   cfg: dict = load_config_json()
+  if not cfg:
+    return
+
   proxy = cfg["proxy"]
 
   data_store: DataStore = DataStore()
