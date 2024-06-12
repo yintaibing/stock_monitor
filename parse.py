@@ -33,7 +33,7 @@ def hide_stock_name(cfg: dict, name: str) -> str:
   for k, v in hidings.items():
     key = str(k).strip()
     value = str(v).strip()
-    if len(key) > 1 and len(value) > 1:
+    if len(key) > 0 and len(value) > 0:
       if key.startswith("*"):
         key = key[1:]
         if name.endswith(key):
@@ -66,7 +66,7 @@ def parse_stock_infos(cfg: dict, data_store: DataStore, content: str) -> None:
       stock = data_store.all_stocks[i]
     else:
       for s in data_store.all_stocks:
-        if (s.code.endswith(code)):
+        if s.code.endswith(code):
           stock = s
           break
 

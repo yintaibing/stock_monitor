@@ -1,3 +1,5 @@
+import utils
+
 # Stock class
 class Stock:
   def __init__(self, code: str) -> None:
@@ -19,7 +21,10 @@ class StockGroup:
 
     if stock_codes:
       for code in stock_codes:
-        self.stocks.append(Stock(code))
+        if utils.verify_stock_code(code):
+          self.stocks.append(Stock(code[-6:]))
+        else:
+          print(f"bad stock code: {code}, ignore")
 
   def __str__(self) -> str:
     return f"{self.name}({len(self.stocks)})"

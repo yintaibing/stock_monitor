@@ -2,11 +2,13 @@ import os
 import json
 import time
 import datetime
+import traceback
 from rich.live import Live
 
 from models import *
 from parse import *
 from print import prepare_live_print, print_stocks
+import utils
 
 # load stocks.json
 def load_config_json() -> dict | None:
@@ -20,6 +22,7 @@ def load_config_json() -> dict | None:
   return None
 
 
+# check market is open or not
 def check_market_open(data_store: DataStore) -> datetime.datetime:
   now = datetime.datetime.today()
   if now.weekday() < 6 and now.hour in [9, 10, 11, 13, 14, 15]:
@@ -53,8 +56,11 @@ def main() -> None:
   else:
     data_store.stock_groups = parse_stock_groups_from_local(cfg)
 
-  for market_index_code in cfg["market_indices"]:
-    data_store.market_indices.stocks.append(Stock(market_index_code))
+  for code in cfg["market_indices"]:
+    if utils.verify_stock_code(code, is_market_index=True):
+      data_store.market_indices.stocks.append(Stock(code))
+    else:
+      print(f"bad stock code: {code}, ignore")
   
   data_store.all_stocks = data_store.market_indices.stocks.copy()
   stock_codes: list = list(map(lambda s: s.code, data_store.all_stocks))
@@ -66,17 +72,21 @@ def main() -> None:
       else:
         data_store.all_stocks.append(group.stocks[i])
         stock_codes.append(group.stocks[i].code)
-  stock_codes = ",".join(stock_codes)
   if len(stock_codes) <= 0:
     return
   
-  print("\n")
+  full_codes = ""
+  for code in stock_codes:
+    full_codes += utils.add_sh_sz_prefix(code) + ","
+  full_codes = full_codes[:-1]
+  # print(f"full_codes={full_codes}\n")
+
   live_print: Live = prepare_live_print()
   data_store.market_open = True
   while data_store.market_open:
       try:
           t_req_start = check_market_open(data_store)
-          stock_info_content = get_stock_infos(stock_codes, proxy)
+          stock_info_content = get_stock_infos(full_codes, proxy)
           if not stock_info_content:
             continue
 
@@ -86,14 +96,15 @@ def main() -> None:
           parse_stock_infos(cfg, data_store, stock_info_content)
           print_stocks(live_print, data_store)
           
-          t_next_req = datetime.datetime.fromtimestamp(
-            t_req_start.timestamp() + data_store.interval_seconds)
-          if t_req_end < t_next_req:
-            time.sleep((t_next_req - t_req_end).total_seconds())
+          if data_store.market_open:
+            t_next_req = datetime.datetime.fromtimestamp(
+              t_req_start.timestamp() + data_store.interval_seconds)
+            if t_req_end < t_next_req:
+              time.sleep((t_next_req - t_req_end).total_seconds())
       except KeyboardInterrupt:
         data_store.market_open = False
-      except Exception as e:
-        print(e)
+      except Exception:
+        traceback.print_exc()
         data_store.market_open = False
 
 # run

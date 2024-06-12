@@ -28,10 +28,10 @@ def colorize(data_store: DataStore, stock: Stock, text: any) -> str:
 
 # build table
 def build_stocks_table(data_store: DataStore) -> Table:
-  title = "[#ff8888]○[/]" if data_store.market_open else "[green]×[/]"
+  title = "[#ff8888]●[/]" if data_store.market_open else "[green]×[/]"
   title += f" 延迟/间隔：{format_num(data_store.network_latency)}s/{data_store.interval_seconds}s\n"
   for s in data_store.market_indices.stocks:
-    title += f" {s.name[0:1]} {colorize(data_store, s, s.amplitude)}"
+    title += f" {s.name[0]} {colorize(data_store, s, s.amplitude)}"
 
   table = Table(show_header=True, title=title)
   

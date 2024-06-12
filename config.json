@@ -8,21 +8,23 @@
     "appkey": "todo",
     "cookie": "todo"
   },
-  "colorize": false,
-  "interval_seconds": 3,
-  "market_indices": ["sh000001", "sz399001", "sz399006", "sh000688"],
+  "colorize": true,
+  "interval_seconds": 3.5,
+  "market_indices": ["sh000001", "sz399001", "sz399006", "sh000688", "bj899050"],
   "local_stock_groups": [
     [
       "分组一",
-      "sz002594",
+      "300750",
+      "002594",
       "sz000520",
-      "sz002590",
+      "002590",
       "sh601933"
     ], [
       "分组二",
       "sh601136",
-      "sz002594",
-      "sh600941"
+      "002594",
+      "sh600941",
+      "bj833171"
     ]
   ],
   "stock_name_hidings": {
@@ -30,7 +32,7 @@
     "*科技": "K技",
     "*证券": "Z券",
     "*电子": "D子",
-    "中国*": "ZG",
+    "国": "G",
     "比亚迪": "BYD"
   }
 }
