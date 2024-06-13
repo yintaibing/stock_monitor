@@ -43,7 +43,7 @@ def build_stocks_table(data_store: DataStore) -> Table:
 
   for group in data_store.stock_groups:
       table.add_column(group.name, justify="right", no_wrap=True)
-      table.add_column("¥", justify="right", no_wrap=True)
+      table.add_column("¥-" if data_store.market_open else "¥", justify="right", no_wrap=True)
       table.add_column("%", justify="right", no_wrap=True)
 
   group_count = len(data_store.stock_groups)
@@ -56,7 +56,13 @@ def build_stocks_table(data_store: DataStore) -> Table:
         row += ("", "", "")
       else:
         stock: Stock = group.stocks[i]
-        row += (stock.name, format_num(stock.price), colorize(data_store, stock, stock.amplitude))
+        price_str = format_num(stock.price)
+        if data_store.market_open:
+          if stock.last_price != None and stock.price != stock.last_price:
+            price_str += "▲" if stock.price > stock.last_price else "▼"
+          else:
+            price_str += " "
+        row += (stock.name, price_str, colorize(data_store, stock, stock.amplitude))
     table.add_row(*row)
 
   return table

@@ -6,6 +6,7 @@ class Stock:
     self.code: str = code
     self.name: str = None
     self.price: float = None
+    self.last_price: float = None
     self.last_day_price: float = None
     self.amplitude: float = None
 

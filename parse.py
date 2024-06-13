@@ -63,5 +63,7 @@ def parse_stock_infos(local: dict, data_store: DataStore, content: str) -> None:
       if not stock.name:
         stock.name = hide_stock_name(local, items[1])
         stock.last_day_price = float(items[4])
+      if stock.price != None:
+        stock.last_price = stock.price
       stock.price = float(items[3])
       stock.amplitude = float(items[32])
