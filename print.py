@@ -20,7 +20,7 @@ def colorize(data_store: DataStore, stock: Stock, text: any) -> str:
   s = format_num(text) if isinstance(text, float) else str(text)
   if data_store.colorize:
     if stock.price > stock.last_day_price:
-      return "[#ff8888]" + s + "[/]"
+      return "[red]" + s + "[/]"
     if stock.price < stock.last_day_price:
       return "[green]" + s + "[/]"
   return s
@@ -28,7 +28,10 @@ def colorize(data_store: DataStore, stock: Stock, text: any) -> str:
 
 # build table
 def build_stocks_table(data_store: DataStore) -> Table:
-  title = "[#ff8888]●[/]" if data_store.market_open else "[green]×[/]"
+  title = "●" if data_store.market_open else "×"
+  if data_store.colorize:
+    title = f"[red]{title}[/]" if data_store.market_open else f"[green]{title}[/]"
+
   title += f" 延迟/间隔：{format_num(data_store.network_latency)}s/{data_store.interval_seconds}s\n"
   for s in data_store.market_indices.stocks:
     title += f" {s.name[0]} {colorize(data_store, s, s.amplitude)}"
