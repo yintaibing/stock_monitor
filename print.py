@@ -59,13 +59,14 @@ def build_stocks_table(data_store: DataStore) -> Table:
         row += ("", "", "")
       else:
         stock: Stock = group.stocks[i]
-        price_str = format_num(stock.price)
+        name_str = stock.name
         if data_store.market_open:
           if stock.last_price != None and stock.price != stock.last_price:
-            price_str += "▲" if stock.price > stock.last_price else "▼"
+            # ↑↓▲▼ʌv
+            name_str += "ʌ" if stock.price > stock.last_price else "v"
           else:
-            price_str += " "
-        row += (stock.name, price_str, colorize(data_store, stock, stock.amplitude))
+            name_str += "-"
+        row += (name_str, format_num(stock.price), colorize(data_store, stock, stock.amplitude))
     table.add_row(*row)
 
   return table
