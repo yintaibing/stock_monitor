@@ -28,11 +28,12 @@ def get_stock_infos(stock_codes: str, proxy: dict) -> str:
 
 # hide stock name
 def hide_stock_name(cfg: dict, name: str) -> str:
-  hidings: dict = cfg["stock_name_hidings"]
-  for k, v in hidings.items():
-    key = str(k).strip()
-    if len(key) > 0 and name.count(key) > 0:
-      return name.replace(key, str(v).strip())
+  if bool(cfg["stock_name_hiding_enable"]):
+    hidings: dict = cfg["stock_name_hidings"]
+    for k, v in hidings.items():
+      key = str(k).strip()
+      if len(key) > 0 and name.count(key) > 0:
+        return name.replace(key, str(v).strip())
   return name
 
 

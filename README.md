@@ -24,4 +24,5 @@
 ### local.json
 - `market_indices`: 市场主要指数，代码**必须**加sh/sz/bj前缀，名字将缩略只展示首汉字。
 - `stock_groups`: 本地配置个股和分组。
+- `stock_name_hiding_enable`: 个股名称隐蔽，开关。
 - `stock_name_hidings`: 个股名称隐蔽，尽量减少被路人发现。
