@@ -8,6 +8,6 @@
     "appkey": "todo",
     "cookie": "todo"
   },
-  "colorize": true,
+  "colorize": false,
   "interval_seconds": 3
 }

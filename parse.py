@@ -13,17 +13,18 @@ def parse_stock_groups_from_local(cfg: dict) -> list:
 
 
 # get stock info
-def get_stock_infos(stock_codes: str, proxy: dict) -> str:
+def get_stock_infos(stock_codes: str, proxy: dict, timeout: float) -> str:
   url = f"https://qt.gtimg.cn/q={stock_codes}"
   try:
-    response = requests.get(url, proxies=proxy)
-    charset = response.headers["Content-Type"].split(";")[1]
-    encoding = charset.split("=")[1]
-    content = response.content.decode(encoding)
-    return content
+    response = requests.get(url, proxies=proxy, timeout=timeout)
+    if response.status_code == 200:
+      charset = response.headers["Content-Type"].split(";")[1]
+      encoding = charset.split("=")[1]
+      content = response.content.decode(encoding)
+      return content
   except Exception as e:
     print(e)
-    return None
+  return None
 
 
 # hide stock name

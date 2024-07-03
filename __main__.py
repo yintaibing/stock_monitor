@@ -90,7 +90,7 @@ def main() -> None:
   while data_store.market_open:
     try:
         t_req_start = check_market_open(data_store)
-        stock_info_content = get_stock_infos(full_codes, proxy)
+        stock_info_content = get_stock_infos(full_codes, proxy, data_store.interval_seconds)
         if not stock_info_content:
           continue
 
