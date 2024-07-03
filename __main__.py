@@ -85,6 +85,7 @@ def main() -> None:
   full_codes = full_codes[:-1]
   # print(f"full_codes={full_codes}\n")
 
+  req_fail_count = 0
   live_print: Live = prepare_live_print()
   data_store.market_open = True
   while data_store.market_open:
@@ -92,8 +93,14 @@ def main() -> None:
         t_req_start = check_market_open(data_store)
         stock_info_content = get_stock_infos(full_codes, proxy, data_store.interval_seconds)
         if not stock_info_content:
-          continue
-
+          req_fail_count += 1
+          if req_fail_count >= 10:
+            print("req_fail_count >= 10")
+            data_store.market_open = False
+          else:
+            continue
+          
+        req_fail_count = 0
         t_req_end = datetime.datetime.today()
         data_store.network_latency = (t_req_end - t_req_start).total_seconds()
 
