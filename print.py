@@ -50,7 +50,7 @@ def build_stocks_table(data_store: DataStore) -> Table:
       max_rows = stock_count
 
   for group in data_store.stock_groups:
-      table.add_column(group.name, justify="left", no_wrap=True)
+      table.add_column(group.name, justify="right", no_wrap=True)
       table.add_column("¥-" if data_store.market_open else "¥", justify="right", no_wrap=True)
       table.add_column("%", justify="right", no_wrap=True)
 
@@ -65,10 +65,10 @@ def build_stocks_table(data_store: DataStore) -> Table:
       else:
         stock: Stock = group.stocks[i]
         name_str = stock.name
-        if data_store.market_open:
+        if data_store.market_open and data_store.price_arrow_up != None:
+          name_str += " "
           if stock.last_price != None and stock.price != stock.last_price:
-            # ↑↓▲▼ʌvΛVAV
-            name_str += "A" if stock.price > stock.last_price else "V"
+            name_str += data_store.price_arrow_up if stock.price > stock.last_price else data_store.price_arrow_down
           else:
             name_str += "-"
         row += (name_str, format_num(stock.price), colorize(data_store, stock, stock.amplitude))

@@ -41,4 +41,6 @@ class DataStore:
 
     self.colorize: bool = True
     self.interval_seconds: float = 0
+    self.price_arrow_up: str = None
+    self.price_arrow_down: str = None
     self.network_latency: float = 0

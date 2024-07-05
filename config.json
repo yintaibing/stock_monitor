@@ -9,5 +9,6 @@
     "cookie": "todo"
   },
   "colorize": false,
-  "interval_seconds": 3
+  "interval_seconds": 3,
+  "price_arrows": "AV↑↓▲▼ʌvΛV"
 }

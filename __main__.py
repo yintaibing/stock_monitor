@@ -52,6 +52,10 @@ def main() -> None:
   data_store: DataStore = DataStore()
   data_store.colorize = bool(cfg["colorize"])
   data_store.interval_seconds = float(cfg["interval_seconds"])
+  price_arrows = str(cfg["price_arrows"])
+  if price_arrows != None and len(price_arrows) > 1:
+    data_store.price_arrow_up = price_arrows[0]
+    data_store.price_arrow_down = price_arrows[1]
 
   eastmoney: dict = cfg["eastmoney"]
   if (eastmoney["enable"] == True):
