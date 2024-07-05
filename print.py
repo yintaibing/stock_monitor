@@ -67,8 +67,8 @@ def build_stocks_table(data_store: DataStore) -> Table:
         name_str = stock.name
         if data_store.market_open:
           if stock.last_price != None and stock.price != stock.last_price:
-            # ↑↓▲▼ʌv
-            name_str += "ʌ" if stock.price > stock.last_price else "v"
+            # ↑↓▲▼ʌvΛVAV
+            name_str += "A" if stock.price > stock.last_price else "V"
           else:
             name_str += "-"
         row += (name_str, format_num(stock.price), colorize(data_store, stock, stock.amplitude))
