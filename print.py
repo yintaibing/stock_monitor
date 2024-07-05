@@ -50,7 +50,7 @@ def build_stocks_table(data_store: DataStore) -> Table:
       max_rows = stock_count
 
   for group in data_store.stock_groups:
-      table.add_column(group.name, justify="right", no_wrap=True)
+      table.add_column(group.name, justify="left", no_wrap=True)
       table.add_column("¥-" if data_store.market_open else "¥", justify="right", no_wrap=True)
       table.add_column("%", justify="right", no_wrap=True)
 
