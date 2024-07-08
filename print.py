@@ -35,11 +35,15 @@ def build_stocks_table(data_store: DataStore) -> Table:
   title += f" 延迟/间隔：{format_num(data_store.network_latency)}s/{data_store.interval_seconds}s\n"
 
   # market indices, print sh000001 value and amplitude
+  # market indices must be colorized
+  colorized = data_store.colorize
+  data_store.colorize = True
   for s in data_store.market_indices.stocks:
     if s.code == "sh000001":
       title += f" {s.name[0]} {colorize(data_store, s, s.price)} {colorize(data_store, s, s.amplitude)}"
     else:
       title += f" {s.name[0]} {colorize(data_store, s, s.amplitude)}"
+  data_store.colorize = colorized
 
   table = Table(show_header=True, title=title)
   
