@@ -43,4 +43,5 @@ class DataStore:
     self.interval_seconds: float = 0
     self.price_arrow_up: str = None
     self.price_arrow_down: str = None
+    self.seconds_to_market_open: int = 0
     self.network_latency: float = 0
