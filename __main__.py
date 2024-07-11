@@ -70,7 +70,7 @@ def main() -> None:
     data_store.price_arrow_down = price_arrows[1]
 
   eastmoney: dict = cfg["eastmoney"]
-  if (eastmoney["enable"] == True):
+  if (bool(eastmoney["enable"])):
     print(eastmoney)
     return
   else:
@@ -150,6 +150,9 @@ def main() -> None:
       traceback.print_exc()
       data_store.market_open = False
       market_status = -1
+
+  live_print.stop()
+
 
 # run
 if __name__ == "__main__":

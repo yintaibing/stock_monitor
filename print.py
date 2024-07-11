@@ -6,6 +6,7 @@ from rich.table import Table
 from rich.live import Live
 
 from models import *
+from utils import seconds_to_hms
 
 RED = "red"
 GREEN = "green"
@@ -46,9 +47,9 @@ def colorize_markup(data_store: DataStore, stock: Stock, text: any) -> str:
 
 # build market status
 def build_market_status(data_store: DataStore) -> Text:
-  parts = []
+  parts = ["\n"] # give a blank line at start
   if data_store.seconds_to_market_open > 0:
-    parts.append(f"距开市：{data_store.seconds_to_market_open}s")
+    parts.append(f"距开市：{seconds_to_hms(data_store.seconds_to_market_open)}")
   elif data_store.market_open:
     parts.append(("●", RED))
   else:

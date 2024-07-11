@@ -1,4 +1,5 @@
 import re
+import numbers
 
 stock_code_pattern = re.compile(r'^(300[\d]{3}|688[\d]{3}|60[\d]{4}|00[\d]{4}|8[\d]{5})$')
 
@@ -24,3 +25,10 @@ def add_sh_sz_prefix(stock_code: str) -> str:
   elif stock_code.startswith("8"):
     return "bj" + stock_code
   return stock_code
+
+# format duration in seconds to hh:mm:ss
+def seconds_to_hms(seconds: int) -> str:
+  h = int(seconds / 3600)
+  m = int((seconds - (h * 3600)) / 60)
+  s = seconds - h * 3600 - m * 60
+  return f"{h:02}:{m:02}:{s:02}"
