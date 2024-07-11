@@ -145,9 +145,11 @@ def main() -> None:
             time.sleep((t_next_req - t_req_end).total_seconds())
     except KeyboardInterrupt:
       data_store.market_open = False
+      market_status = -1
     except Exception:
       traceback.print_exc()
       data_store.market_open = False
+      market_status = -1
 
 # run
 if __name__ == "__main__":
