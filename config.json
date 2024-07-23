@@ -14,7 +14,7 @@
   "gui": true,
   "gui_font_size": 10,
   "gui_topmost": false,
-  "gui_theme": "light",
+  "gui_theme": "dark",
   "gui_theme_list": {
     "light": {
       "bg_color": "#ddd",
