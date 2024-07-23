@@ -13,7 +13,7 @@
   "price_arrows": "AV↑↓▲▼ʌvΛV",
   "gui": true,
   "gui_font_size": 10,
-  "gui_topmost": true,
+  "gui_topmost": false,
   "gui_theme": "dark",
   "gui_theme_list": {
     "light": {
