@@ -1,4 +1,5 @@
 import os
+import sys
 import json
 import time
 import datetime
@@ -52,14 +53,70 @@ def check_market_status(now: datetime.datetime) -> int:
   return -1
 
 
+# loop request
+def loop_request(cfg: dict, local: dict, full_codes: str, 
+                 data_store: DataStore, live_print: Live | None) -> None:
+  market_status = 0
+  stock_info_content: str | None = None
+  req_fail_count = 0
+  while market_status >= 0:
+    try:
+        t_req_start = datetime.datetime.today()
+        market_status = check_market_status(t_req_start)
+        data_store.market_open = market_status == 0
+        data_store.seconds_to_market_open = market_status
+
+        # before market open, request only once(success), then wait
+        if market_status > 0 and stock_info_content:
+          if live_print:
+            print_stocks(live_print, data_store)
+          time.sleep(data_store.interval_seconds)
+          continue
+        
+        # request stock infos
+        stock_info_content = get_stock_infos(full_codes, cfg["proxy"], data_store.interval_seconds)
+        
+        # if request failed more than 10 times, terminate
+        if not stock_info_content:
+          req_fail_count += 1
+          if req_fail_count < 10:
+            continue
+          print("req_fail_count >= 10")
+          market_status = -1
+          data_store.market_open = False
+          break
+          
+        req_fail_count = 0
+        t_req_end = datetime.datetime.today()
+        data_store.network_latency = (t_req_end - t_req_start).total_seconds()
+
+        parse_stock_infos(local, data_store, stock_info_content)
+        if live_print:
+          print_stocks(live_print, data_store)
+        
+        if data_store.market_open:
+          t_next_req = datetime.datetime.fromtimestamp(
+            t_req_start.timestamp() + data_store.interval_seconds)
+          if t_req_end < t_next_req:
+            time.sleep((t_next_req - t_req_end).total_seconds())
+    except KeyboardInterrupt:
+      data_store.market_open = False
+      market_status = -1
+    except Exception:
+      traceback.print_exc()
+      data_store.market_open = False
+      market_status = -1
+
+  if live_print:
+    live_print.stop()
+
+
 # main
 def main() -> None:
   cfg: dict = load_json_file("config.json")
   local: dict = load_json_file("local.json")
   if not (cfg and local):
     return
-
-  proxy = cfg["proxy"]
 
   data_store: DataStore = DataStore()
   data_store.colorize = bool(cfg["colorize"])
@@ -68,6 +125,13 @@ def main() -> None:
   if price_arrows != None and len(price_arrows) > 1:
     data_store.price_arrow_up = price_arrows[0]
     data_store.price_arrow_down = price_arrows[1]
+
+  gui = bool(cfg["gui"])
+  if not gui and len(sys.argv) > 1:
+    for arg in sys.argv[1:]:
+      if arg == "--gui":
+        gui = True
+        break
 
   eastmoney: dict = cfg["eastmoney"]
   if (bool(eastmoney["enable"])):
@@ -101,57 +165,11 @@ def main() -> None:
   full_codes = full_codes[:-1]
   # print(f"full_codes={full_codes}\n")
 
-  live_print: Live = prepare_live_print()
-  market_status = 0
-  stock_info_content: str | None = None
-  req_fail_count = 0
-  while market_status >= 0:
-    try:
-        t_req_start = datetime.datetime.today()
-        market_status = check_market_status(t_req_start)
-        data_store.market_open = market_status == 0
-        data_store.seconds_to_market_open = market_status
-
-        # before market open, request only once(success), then wait
-        if market_status > 0 and stock_info_content:
-          print_stocks(live_print, data_store)
-          time.sleep(data_store.interval_seconds)
-          continue
-        
-        # request stock infos
-        stock_info_content = get_stock_infos(full_codes, proxy, data_store.interval_seconds)
-        
-        # if request failed more than 10 times, terminate
-        if not stock_info_content:
-          req_fail_count += 1
-          if req_fail_count < 10:
-            continue
-          print("req_fail_count >= 10")
-          market_status = -1
-          data_store.market_open = False
-          break
-          
-        req_fail_count = 0
-        t_req_end = datetime.datetime.today()
-        data_store.network_latency = (t_req_end - t_req_start).total_seconds()
-
-        parse_stock_infos(local, data_store, stock_info_content)
-        print_stocks(live_print, data_store)
-        
-        if data_store.market_open:
-          t_next_req = datetime.datetime.fromtimestamp(
-            t_req_start.timestamp() + data_store.interval_seconds)
-          if t_req_end < t_next_req:
-            time.sleep((t_next_req - t_req_end).total_seconds())
-    except KeyboardInterrupt:
-      data_store.market_open = False
-      market_status = -1
-    except Exception:
-      traceback.print_exc()
-      data_store.market_open = False
-      market_status = -1
-
-  live_print.stop()
+  if gui:
+    print("gui")
+  else:
+    live_print: Live = prepare_live_print()
+    loop_request(cfg, local, full_codes, data_store, live_print)
 
 
 # run

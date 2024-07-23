@@ -64,11 +64,10 @@ def build_market_status(data_store: DataStore) -> Text:
   data_store.colorize = True
   
   for s in data_store.market_indices.stocks:
-    parts.append(f"{s.name[0]} ")
     if s.code == "sh000001":
-      parts.append(colorize_assemble(data_store, s, s.price))
-      parts.append(" ")
-    parts.append(colorize_assemble(data_store, s, s.amplitude))
+      parts.append(colorize_assemble(data_store, s, f"{s.name[0]} {s.amplitude}={s.price}"))
+    else:
+      parts.append(colorize_assemble(data_store, s, f"{s.name[0]} {s.amplitude}"))
     parts.append(" ")
   
   data_store.colorize = value_colorize
