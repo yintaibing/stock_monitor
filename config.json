@@ -11,7 +11,7 @@
   "colorize": true,
   "interval_seconds": 3,
   "price_arrows": "AV↑↓▲▼ʌvΛV",
-  "gui": false,
+  "gui": true,
   "gui_font_size": 10,
   "gui_topmost": true,
   "gui_theme": "dark",
