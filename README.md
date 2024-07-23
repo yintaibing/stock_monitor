@@ -13,11 +13,12 @@
 ### Usage
 - 需要Python 3.7.0以上, `pip install`安装以下库：`requests`, `requests[socks]`, `rich`, `tkinter`。
 - 编辑`local.json`中的`stock_groups`，个股代码的sh/sz/bj前缀建议加、也可不加。
-- 用任意命令行终端运行本仓库即可，比如Windows的cmd或Powershell。   
+- 启动方式一：双击`double_click_to_run.bat`运行。
+- 启动方式二：用命令行终端运行本仓库即可，比如Windows的cmd或Powershell。   
 ```
 python your_path/stock_monitor --gui
 ```
-- 命令行可追加`--gui`参数，强制使用GUI窗口模式，默认以`config.json`中的`gui`配置项为准。
+- 命令行可追加`--gui`参数，强制使用GUI窗口模式。
 - tips: 可以右击cmd的属性，修改背景和文字颜色，然后`Ctrl+鼠标滚轮`缩放（图二），使之更隐蔽。
 
 ### config.json
