@@ -26,6 +26,10 @@ def add_sh_sz_prefix(stock_code: str) -> str:
     return "bj" + stock_code
   return stock_code
 
+# save 2 fractions, append 0 if endswith .0
+def fraction_2(num: float) -> str:
+  return "{:.2f}".format(num)
+
 # format duration in seconds to hh:mm:ss
 def seconds_to_hms(seconds: int) -> str:
   h = int(seconds / 3600)

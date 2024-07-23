@@ -6,7 +6,7 @@ from rich.table import Table
 from rich.live import Live
 
 from models import *
-from utils import seconds_to_hms
+from utils import fraction_2, seconds_to_hms
 
 RED = "red"
 GREEN = "green"
@@ -18,14 +18,9 @@ def prepare_live_print() -> Live:
   return live
 
 
-# append 0 if endswith .0
-def format_num(num: float) -> str:
-  return "{:.2f}".format(num)
-
-
 # colorize with assemble
 def colorize_assemble(data_store: DataStore, stock: Stock, text: any) -> str | Tuple:
-  s = format_num(text) if isinstance(text, float) else str(text)
+  s = fraction_2(text) if isinstance(text, float) else str(text)
   if data_store.colorize:
     if stock.price > stock.last_day_price:
       return (s, RED)
@@ -36,7 +31,7 @@ def colorize_assemble(data_store: DataStore, stock: Stock, text: any) -> str | T
 
 # colorize with markup
 def colorize_markup(data_store: DataStore, stock: Stock, text: any) -> str:
-  s = format_num(text) if isinstance(text, float) else str(text)
+  s = fraction_2(text) if isinstance(text, float) else str(text)
   if data_store.colorize:
     if stock.price > stock.last_day_price:
       return f"[{RED}]{s}[/]"
@@ -55,7 +50,7 @@ def build_market_status(data_store: DataStore) -> Text:
   else:
     parts.append(("×", GREEN))
   
-  parts.append(f" 延迟/间隔：{format_num(data_store.network_latency)}s/{data_store.interval_seconds}s")
+  parts.append(f" 延迟/间隔：{fraction_2(data_store.network_latency)}s/{data_store.interval_seconds}s")
   parts.append("\n")
 
   # market indices, print sh000001 value and amplitude
@@ -65,7 +60,7 @@ def build_market_status(data_store: DataStore) -> Text:
   
   for s in data_store.market_indices.stocks:
     if s.code == "sh000001":
-      parts.append(colorize_assemble(data_store, s, f"{s.name[0]} {s.amplitude}={s.price}"))
+      parts.append(colorize_assemble(data_store, s, f"{s.name[0]} {s.amplitude} {s.price}"))
     else:
       parts.append(colorize_assemble(data_store, s, f"{s.name[0]} {s.amplitude}"))
     parts.append(" ")
@@ -86,7 +81,7 @@ def build_stocks_table(data_store: DataStore) -> Table:
 
   for group in data_store.stock_groups:
       table.add_column(group.name, justify="right", no_wrap=True)
-      table.add_column("¥-" if data_store.market_open else "¥", justify="right", no_wrap=True)
+      table.add_column("¥", justify="right", no_wrap=True)
       table.add_column("%", justify="right", no_wrap=True)
 
   group_count = len(data_store.stock_groups)
@@ -99,14 +94,14 @@ def build_stocks_table(data_store: DataStore) -> Table:
         row += ("", "", "")
       else:
         stock: Stock = group.stocks[i]
-        name_str = stock.name
+        str_name = stock.name
         if data_store.market_open and data_store.price_arrow_up != None:
-          name_str += " "
+          str_name += " "
           if stock.last_price != None and stock.price != stock.last_price:
-            name_str += data_store.price_arrow_up if stock.price > stock.last_price else data_store.price_arrow_down
+            str_name += data_store.price_arrow_up if stock.price > stock.last_price else data_store.price_arrow_down
           else:
-            name_str += "-"
-        row += (name_str, format_num(stock.price), colorize_markup(data_store, stock, stock.amplitude))
+            str_name += "-"
+        row += (str_name, fraction_2(stock.price), colorize_markup(data_store, stock, stock.amplitude))
     table.add_row(*row)
 
   return table

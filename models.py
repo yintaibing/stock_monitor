@@ -45,3 +45,12 @@ class DataStore:
     self.price_arrow_down: str = None
     self.seconds_to_market_open: int = 0
     self.network_latency: float = 0
+
+
+# GUI theme, default is light theme
+class Theme:
+  def __init__(self) -> None:
+    self.bg_color: str = "#ddd"
+    self.font_color: str = "#000"
+    self.red: str = "#f00"
+    self.green: str = "#0f0"

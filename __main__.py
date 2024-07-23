@@ -4,11 +4,13 @@ import json
 import time
 import datetime
 import traceback
+from threading import Thread
 from rich.live import Live
 
 from models import *
 from parse import *
 from print import prepare_live_print, print_stocks
+from gui import create_window, set_gui_data_store
 import utils
 
 # load stocks.json
@@ -70,11 +72,13 @@ def loop_request(cfg: dict, local: dict, full_codes: str,
         if market_status > 0 and stock_info_content:
           if live_print:
             print_stocks(live_print, data_store)
+          else:
+            set_gui_data_store(data_store)
           time.sleep(data_store.interval_seconds)
           continue
         
         # request stock infos
-        stock_info_content = get_stock_infos(full_codes, cfg["proxy"], data_store.interval_seconds)
+        stock_info_content = get_stock_infos(full_codes, cfg["proxy"], data_store.interval_seconds * 2)
         
         # if request failed more than 10 times, terminate
         if not stock_info_content:
@@ -93,6 +97,8 @@ def loop_request(cfg: dict, local: dict, full_codes: str,
         parse_stock_infos(local, data_store, stock_info_content)
         if live_print:
           print_stocks(live_print, data_store)
+        else:
+          set_gui_data_store(data_store)
         
         if data_store.market_open:
           t_next_req = datetime.datetime.fromtimestamp(
@@ -166,7 +172,10 @@ def main() -> None:
   # print(f"full_codes={full_codes}\n")
 
   if gui:
-    print("gui")
+    thread = Thread(name="loop_request", target=loop_request, 
+                    args=[cfg, local, full_codes, data_store, None])
+    thread.start()
+    create_window(cfg, local, data_store)
   else:
     live_print: Live = prepare_live_print()
     loop_request(cfg, local, full_codes, data_store, live_print)

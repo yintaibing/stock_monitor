@@ -1,0 +1,225 @@
+import os
+import tkinter as tk
+
+from models import *
+from utils import fraction_2, seconds_to_hms
+
+_cfg: dict = None
+_font = ("宋体", 10)
+_theme: Theme = None
+
+_root: tk.Tk = None
+_transparent_mode = False
+_dragged = 0
+_x: int = 0
+_y: int = 0
+
+gui_data_store: DataStore | None = None
+
+def _parse_gui_theme(cfg: dict) -> Theme:
+  t = Theme()
+  theme_name = cfg.get("gui_theme")
+  if theme_name:
+    theme_list: dict = cfg.get("gui_theme_list")
+    current: dict = theme_list.get(theme_name) if theme_list else None
+    if current:
+      t.bg_color = current["bg_color"] if current.get("bg_color") else t.bg_color
+      t.font_color = current["font_color"] if current.get("font_color") else t.font_color
+      t.red = current["red"] if current.get("red") else t.red
+      t.green = current["green"] if current.get("green") else t.green
+  return t
+
+
+def _destroy_window() -> None:
+  if _root:
+    _root.destroy()
+  os._exit(os.EX_OK)
+
+
+def _drag_start(event) -> None:
+  global _dragged, _x, _y
+  _x = event.x
+  _y = event.y
+  _dragged = 1
+
+
+def _drag_move(event) -> None:
+  global _root, _dragged, _x, _y
+  x = _root.winfo_x() + event.x - _x
+  y = _root.winfo_y() + event.y - _y
+  _root.geometry(f"+{x}+{y}")
+  _dragged = 2
+
+
+def _drag_release(event) -> None:
+  global _dragged, _x, _y
+  if _dragged == 1:
+    _change_window_mode()
+  _dragged = 0
+  _x = None
+  _y = None
+
+
+def _change_window_mode() -> None:
+  global _cfg, _theme, _root, _transparent_mode
+  _root.overrideredirect(0 if _transparent_mode else 1) # 窗口边框
+  _root.wm_attributes("-transparentcolor", "" if _transparent_mode else _theme.bg_color) # 透明背景
+  _transparent_mode = not _transparent_mode
+
+
+def _colorize(data_store: DataStore, stock: Stock) -> str:
+  global _theme
+  if data_store.colorize:
+    if stock.price > stock.last_day_price:
+      return _theme.red
+    if stock.price < stock.last_day_price:
+      return _theme.green
+  return _theme.font_color
+
+
+def _create_market_indices_grids(frame: tk.Frame, data_store: DataStore) -> None:
+  global _font, _theme
+  for i in range(0, len(data_store.market_indices.stocks)):
+    s: Stock = data_store.market_indices.stocks[i]
+    label = tk.Label(frame, name=s.code, text=s.code, 
+                     bg=_theme.bg_color, fg=_theme.font_color, font=_font)
+    label.grid(row=0, column=i)
+
+
+def _create_stock_groups_grids(frame: tk.Frame, data_store: DataStore) -> None:
+  global _font, _theme
+  appear_count = dict()
+  for i in range(0, len(data_store.stock_groups)):
+    col_name = i * 3
+
+    group: StockGroup = data_store.stock_groups[i]
+    label_group_name = tk.Label(frame, name=f"group_name{i}", text=group.name, 
+                                bg=_theme.bg_color, fg=_theme.font_color, font=_font)
+    label_group_name.grid(row=0, column=col_name)
+    label_group_price = tk.Label(frame, name=f"group_price{i}", text="¥", 
+                                bg=_theme.bg_color, fg=_theme.font_color, font=_font)
+    label_group_price.grid(row=0, column=col_name + 1)
+    label_group_amp = tk.Label(frame, name=f"group_amp{i}", text="%", 
+                                bg=_theme.bg_color, fg=_theme.font_color, font=_font)
+    label_group_amp.grid(row=0, column=col_name + 2)
+    
+    for j in range(0, len(group.stocks)):
+      s: Stock = group.stocks[j]
+      # if stock appears 2 times or more, name the label with numbers
+      count: int = appear_count.get(s.code, 0)
+      label_stock_name = tk.Label(frame, name=f"{s.code}name{count}", text=s.code, 
+                                  bg=_theme.bg_color, fg=_theme.font_color, font=_font)
+      label_stock_name.grid(row=j + 1, column=col_name)
+      label_price = tk.Label(frame, name=f"{s.code}price{count}", text="-", 
+                             bg=_theme.bg_color, fg=_theme.font_color, font=_font)
+      label_price.grid(row=j + 1, column=col_name + 1)
+      label_amp = tk.Label(frame, name=f"{s.code}amp{count}", text="-", 
+                           bg=_theme.bg_color, fg=_theme.font_color, font=_font)
+      label_amp.grid(row=j + 1, column=col_name + 2)
+      appear_count[s.code] = count + 1
+
+
+def _listen_loop() -> None:
+  global _root, gui_data_store
+  if gui_data_store:
+    # label of market status
+    label_market_status: tk.Label = _root.children["label_market_status"]
+    str_market_status: str
+    if gui_data_store.seconds_to_market_open > 0:
+      str_market_status = f"距开市：{seconds_to_hms(gui_data_store.seconds_to_market_open)}"
+    elif gui_data_store.market_open:
+      str_market_status = "●"
+    else:
+      str_market_status = "×"
+    str_market_status += " 延迟/间隔："
+    str_market_status += f"{fraction_2(gui_data_store.network_latency)}s/{gui_data_store.interval_seconds}s"
+    label_market_status.configure(text=str_market_status)
+
+    # frame of market indices
+    # market indices, print sh000001 value and amplitude
+    # market indices must be colorized
+    value_colorize = gui_data_store.colorize
+    gui_data_store.colorize = True
+    frame_market_indices: tk.Frame = _root.children["frame_market_indices"]
+    for s in gui_data_store.market_indices.stocks:
+      label: tk.Label = frame_market_indices.children.get(s.code)
+      if label:
+        text = f"{s.name[0]} {s.amplitude}"
+        if s.code == "sh000001":
+          text = f"{s.name[0]} {s.amplitude} {s.price}"
+        label.configure(text=text, fg=_colorize(gui_data_store, s))
+    gui_data_store.colorize = value_colorize
+
+    # frame of stock groups
+    frame_stock_groups: tk.Frame = _root.children["frame_stock_groups"]
+    for group in gui_data_store.stock_groups:
+      for s in group.stocks:
+        count = 0
+        while True:
+          label_name: tk.Label | None = frame_stock_groups.children.get(f"{s.code}name{count}")
+          if not label_name:
+            break
+          str_name = s.name
+          if gui_data_store.market_open and gui_data_store.price_arrow_up != None:
+            str_name += " "
+            if s.last_price != None and s.price != s.last_price:
+              str_name += gui_data_store.price_arrow_up if s.price > s.last_price else gui_data_store.price_arrow_down
+            else:
+              str_name += "-"
+          label_name.configure(text=str_name)
+          label_price: tk.Label = frame_stock_groups.children[f"{s.code}price{count}"]
+          label_price.configure(text=fraction_2(s.price))
+          label_amp: tk.Label = frame_stock_groups.children[f"{s.code}amp{count}"]
+          label_amp.configure(text=fraction_2(s.amplitude), fg=_colorize(gui_data_store, s))
+          count += 1
+
+    # clear old data, and wait for new data in the next loop
+    if gui_data_store.market_open or gui_data_store.seconds_to_market_open >= 0:
+      gui_data_store = None
+  
+  if not gui_data_store:
+    _root.after(200, _listen_loop)
+
+
+def create_window(cfg: dict, local: dict, data_store: DataStore) -> None:
+  global _cfg, _theme, _font, _root
+  _cfg = cfg
+  _theme = _parse_gui_theme(cfg)
+  _font = (_font[0], int(cfg["gui_font_size"]))
+
+  _root = tk.Tk()
+  _root.resizable(False, False)
+  _root.config(bg=_theme.bg_color)
+  _root.protocol("WM_DELETE_WINDOW", _destroy_window)
+  _root.wm_attributes("-topmost", bool(cfg["gui_topmost"])) # 窗口置顶
+  _root.bind("<ButtonPress-1>", _drag_start)
+  _root.bind("<B1-Motion>", _drag_move)
+  _root.bind("<ButtonRelease-1>", _drag_release)
+
+  label_drag = tk.Label(_root, text="window_mode", fg="#000", font=_font)
+  label_drag.pack()
+
+  # label of market status
+  label_market_status = tk.Label(_root, name="label_market_status", text="loading",
+                                 bg=_theme.bg_color, fg=_theme.font_color, font=_font)
+  label_market_status.pack()
+
+  # frame of market indices
+  frame_market_indices = tk.Frame(_root, name="frame_market_indices")
+  frame_market_indices.config(bg=_theme.bg_color)
+  _create_market_indices_grids(frame_market_indices, data_store)
+  frame_market_indices.pack()
+
+  # frame of stock groups
+  frame_stock_groups = tk.Frame(_root, name="frame_stock_groups")
+  frame_stock_groups.config(bg=_theme.bg_color)
+  _create_stock_groups_grids(frame_stock_groups, data_store)
+  frame_stock_groups.pack()
+
+  _root.after(200, _listen_loop)
+  _root.mainloop()
+
+
+def set_gui_data_store(data_store: DataStore) -> None:
+  global gui_data_store
+  gui_data_store = data_store

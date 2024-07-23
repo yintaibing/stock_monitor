@@ -8,7 +8,25 @@
     "appkey": "todo",
     "cookie": "todo"
   },
-  "colorize": false,
+  "colorize": true,
   "interval_seconds": 3,
-  "price_arrows": "AV↑↓▲▼ʌvΛV"
+  "price_arrows": "AV↑↓▲▼ʌvΛV",
+  "gui": false,
+  "gui_font_size": 10,
+  "gui_topmost": true,
+  "gui_theme": "dark",
+  "gui_theme_list": {
+    "light": {
+      "bg_color": "#ddd",
+      "font_color": "#000",
+      "red": "#f00",
+      "green": "#2E8B57"
+    },
+    "dark": {
+      "bg_color": "#444",
+      "font_color": "#fff",
+      "red": "#f00",
+      "green": "#00EE76"
+    }
+  }
 }
