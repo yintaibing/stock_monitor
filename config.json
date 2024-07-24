@@ -13,11 +13,10 @@
   "price_arrows": "AV↑↓▲▼ʌvΛV",
   "gui": true,
   "gui_font_size": 10,
-  "gui_topmost": false,
   "gui_theme": "dark",
   "gui_theme_list": {
     "light": {
-      "bg_color": "#ddd",
+      "bg_color": "#eee",
       "font_color": "#000",
       "red": "#f00",
       "green": "#2E8B57"

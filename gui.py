@@ -6,28 +6,15 @@ from utils import fraction_2, seconds_to_hms
 
 _cfg: dict = None
 _font = ("宋体", 10)
-_theme: Theme = None
-
-_root: tk.Tk = None
-_transparent_mode = False
-_dragged = 0
-_x: int = 0
-_y: int = 0
-
+_theme_list: list = []
+_theme: Theme | None = None
 gui_data_store: DataStore | None = None
 
-def _parse_gui_theme(cfg: dict) -> Theme:
-  t = Theme()
-  theme_name = cfg.get("gui_theme")
-  if theme_name:
-    theme_list: dict = cfg.get("gui_theme_list")
-    current: dict = theme_list.get(theme_name) if theme_list else None
-    if current:
-      t.bg_color = current["bg_color"] if current.get("bg_color") else t.bg_color
-      t.font_color = current["font_color"] if current.get("font_color") else t.font_color
-      t.red = current["red"] if current.get("red") else t.red
-      t.green = current["green"] if current.get("green") else t.green
-  return t
+_root: tk.Tk = None
+_x: int = 0
+_y: int = 0
+_transparent_mode = False
+_topmost_mode = False
 
 
 def _destroy_window() -> None:
@@ -36,35 +23,88 @@ def _destroy_window() -> None:
   os._exit(os.EX_OK)
 
 
-def _drag_start(event) -> None:
-  global _dragged, _x, _y
+def _drag_start(event: tk.Event) -> None:
+  global _x, _y
   _x = event.x
   _y = event.y
-  _dragged = 1
 
 
-def _drag_move(event) -> None:
-  global _root, _dragged, _x, _y
+def _drag_move(event: tk.Event) -> None:
+  global _root, _x, _y
   x = _root.winfo_x() + event.x - _x
   y = _root.winfo_y() + event.y - _y
   _root.geometry(f"+{x}+{y}")
-  _dragged = 2
 
 
-def _drag_release(event) -> None:
-  global _dragged, _x, _y
-  if _dragged == 1:
-    _change_window_mode()
-  _dragged = 0
+def _drag_release(event: tk.Event) -> None:
+  global _x, _y
   _x = None
   _y = None
 
 
-def _change_window_mode() -> None:
+def _switch_transparent(event: tk.Event) -> None:
   global _cfg, _theme, _root, _transparent_mode
-  _root.overrideredirect(0 if _transparent_mode else 1) # 窗口边框
-  _root.wm_attributes("-transparentcolor", "" if _transparent_mode else _theme.bg_color) # 透明背景
   _transparent_mode = not _transparent_mode
+  # 窗口边框
+  _root.overrideredirect(1 if _transparent_mode else 0) 
+  # 透明背景
+  _root.wm_attributes("-transparentcolor", _theme.bg_color if _transparent_mode else "") 
+
+
+def _switch_topmost(event: tk.Event) -> None:
+  global _root, _topmost_mode
+  _topmost_mode = not _topmost_mode
+  # 窗口置顶
+  _root.wm_attributes("-topmost", _topmost_mode)
+  event.widget.configure(text="已置顶 |" if _topmost_mode else "窗口置顶 |")
+
+
+def _fill_theme(t: Theme, current: dict) -> None:
+  t.bg_color = current["bg_color"] if current.get("bg_color") else t.bg_color
+  t.font_color = current["font_color"] if current.get("font_color") else t.font_color
+  t.red = current["red"] if current.get("red") else t.red
+  t.green = current["green"] if current.get("green") else t.green
+
+
+def _parse_theme_list() -> None:
+  global _cfg, _theme_list, _theme
+  cur_theme_name = _cfg.get("gui_theme")
+  list: dict = _cfg.get("gui_theme_list")
+  for i, (k, v) in enumerate(list.items()):
+    t = Theme()
+    _fill_theme(t, v)
+    _theme_list.append(t)
+    if k == cur_theme_name:
+      _theme = t
+  if not _theme:
+    _theme = Theme()
+
+
+def _switch_theme(event) -> None:
+  global _theme_list, _theme, _root
+  if len(_theme_list) < 2:
+    return
+  i = _theme_list.index(_theme)
+  if i < 0:
+    return
+  i = i + 1 if i < len(_theme_list) - 1 else 0
+  _theme = _theme_list[i]
+
+  _root.config(bg=_theme.bg_color)
+  _apply_theme(_theme, _root)
+
+
+def _apply_theme(theme: Theme, widget: tk.Widget) -> None:
+  if widget.children is None or len(widget.children) == 0:
+    return
+  for i, (name, child) in enumerate(widget.children.items()):
+    if name == "frame_btns":
+      continue
+    if isinstance(child, tk.Frame):
+      child.config(bg=theme.bg_color)
+      _apply_theme(theme, child)
+    elif isinstance(child, tk.Label):
+      child.config(bg=theme.bg_color, fg=theme.font_color)
 
 
 def _colorize(data_store: DataStore, stock: Stock) -> str:
@@ -93,13 +133,13 @@ def _create_stock_groups_grids(frame: tk.Frame, data_store: DataStore) -> None:
     col_name = i * 3
 
     group: StockGroup = data_store.stock_groups[i]
-    label_group_name = tk.Label(frame, name=f"group_name{i}", text=group.name, 
+    label_group_name = tk.Label(frame, text=group.name, 
                                 bg=_theme.bg_color, fg=_theme.font_color, font=_font)
     label_group_name.grid(row=0, column=col_name)
-    label_group_price = tk.Label(frame, name=f"group_price{i}", text="¥", 
+    label_group_price = tk.Label(frame, text="¥", 
                                 bg=_theme.bg_color, fg=_theme.font_color, font=_font)
     label_group_price.grid(row=0, column=col_name + 1)
-    label_group_amp = tk.Label(frame, name=f"group_amp{i}", text="%", 
+    label_group_amp = tk.Label(frame, text="%", 
                                 bg=_theme.bg_color, fg=_theme.font_color, font=_font)
     label_group_amp.grid(row=0, column=col_name + 2)
     
@@ -184,20 +224,31 @@ def _listen_loop() -> None:
 def create_window(cfg: dict, local: dict, data_store: DataStore) -> None:
   global _cfg, _theme, _font, _root
   _cfg = cfg
-  _theme = _parse_gui_theme(cfg)
   _font = (_font[0], int(cfg["gui_font_size"]))
+  _parse_theme_list()
 
   _root = tk.Tk()
   _root.resizable(False, False)
   _root.config(bg=_theme.bg_color)
   _root.protocol("WM_DELETE_WINDOW", _destroy_window)
-  _root.wm_attributes("-topmost", bool(cfg["gui_topmost"])) # 窗口置顶
-  _root.bind("<ButtonPress-1>", _drag_start)
-  _root.bind("<B1-Motion>", _drag_move)
-  _root.bind("<ButtonRelease-1>", _drag_release)
 
-  label_drag = tk.Label(_root, text="window_mode", fg="#000", font=_font)
-  label_drag.pack()
+  frame_btns = tk.Frame(_root, name="frame_btns")
+  frame_btns.config(bg=_theme.bg_color)
+  label_drag = tk.Label(frame_btns, text="按住拖动 |", fg="#000", font=_font)
+  label_drag.bind("<ButtonPress-1>", _drag_start)
+  label_drag.bind("<B1-Motion>", _drag_move)
+  label_drag.bind("<ButtonRelease-1>", _drag_release)
+  label_transparent = tk.Label(frame_btns, text="窗口透明 |", fg="#000", font=_font)
+  label_transparent.bind("<Button-1>", _switch_transparent)
+  label_topmost = tk.Label(frame_btns, name="label_topmost", text="窗口置顶 |", 
+                           fg="#000", font=_font)
+  label_topmost.bind("<Button-1>", _switch_topmost)
+  label_theme = tk.Label(frame_btns, text="切换颜色", fg="#000", font=_font)
+  label_theme.bind("<Button-1>", _switch_theme)
+  for i, label in enumerate([label_drag, label_transparent, label_topmost, label_theme]):
+    label.config(bg="#e0e0e0")
+    label.grid(row=0, column=i)
+  frame_btns.pack()
 
   # label of market status
   label_market_status = tk.Label(_root, name="label_market_status", text="loading",
