@@ -48,7 +48,7 @@ def _switch_transparent(event: tk.Event) -> None:
   # 窗口边框
   _root.overrideredirect(1 if _transparent_mode else 0) 
   # 透明背景
-  _root.wm_attributes("-transparentcolor", _theme.bg_color if _transparent_mode else "") 
+  _root.wm_attributes("-transparentcolor", _theme.bg_color if _transparent_mode else "")
 
 
 def _switch_topmost(event: tk.Event) -> None:
@@ -92,6 +92,9 @@ def _switch_theme(event) -> None:
 
   _root.config(bg=_theme.bg_color)
   _apply_theme(_theme, _root)
+
+  global _transparent_mode
+  _root.wm_attributes("-transparentcolor", _theme.bg_color if _transparent_mode else "")
 
 
 def _apply_theme(theme: Theme, widget: tk.Widget) -> None:
