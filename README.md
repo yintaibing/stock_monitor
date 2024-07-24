@@ -1,4 +1,4 @@
-### GUI窗口(可透明)/控制台，轮询展示行情
+### GUI窗口(可透明、置顶)/控制台，轮询展示行情
 ![screenshot_3](./screenshot_3.png)
 ![screenshot](./screenshot.png)
 ![screenshot_2](./screenshot_2.png)
