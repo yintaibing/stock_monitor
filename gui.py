@@ -187,9 +187,9 @@ def _listen_loop() -> None:
     for s in gui_data_store.market_indices.stocks:
       label: tk.Label = frame_market_indices.children.get(s.code)
       if label:
-        text = f"{s.name[0]} {s.amplitude}"
+        text = f"{s.name[0]} {fraction_2(s.amplitude)}"
         if s.code == "sh000001":
-          text = f"{s.name[0]} {s.amplitude} {s.price}"
+          text = f"{s.name[0]} {fraction_2(s.amplitude)} {fraction_2(s.price)}"
         label.configure(text=text, fg=_colorize(gui_data_store, s))
     gui_data_store.colorize = value_colorize
 
