@@ -237,19 +237,22 @@ def create_window(cfg: dict, local: dict, data_store: DataStore) -> None:
 
   frame_btns = tk.Frame(_root, name="frame_btns")
   frame_btns.config(bg=_theme.bg_color)
-  label_drag = tk.Label(frame_btns, text="按住拖动 |", fg="#000", font=_font)
-  label_drag.bind("<ButtonPress-1>", _drag_start)
-  label_drag.bind("<B1-Motion>", _drag_move)
-  label_drag.bind("<ButtonRelease-1>", _drag_release)
-  label_transparent = tk.Label(frame_btns, text="窗口透明 |", fg="#000", font=_font)
-  label_transparent.bind("<Button-1>", _switch_transparent)
-  label_topmost = tk.Label(frame_btns, name="label_topmost", text="窗口置顶 |", 
-                           fg="#000", font=_font)
-  label_topmost.bind("<Button-1>", _switch_topmost)
-  label_theme = tk.Label(frame_btns, text="切换颜色", fg="#000", font=_font)
-  label_theme.bind("<Button-1>", _switch_theme)
-  for i, label in enumerate([label_drag, label_transparent, label_topmost, label_theme]):
-    label.config(bg="#e0e0e0")
+  btns_attrs = {
+    "按住拖动": (_drag_start, _drag_move, _drag_release),
+    "窗口透明": _switch_transparent,
+    "窗口置顶": _switch_topmost,
+    "切换颜色": _switch_theme
+  }.items()
+  len_btns_attrs = len(btns_attrs)
+  for i, (name, func) in enumerate(btns_attrs):
+    label: tk.Label = tk.Label(frame_btns, bg="#e0e0e0",fg="#000", font=_font, 
+                               text=f"{name} |" if i < len_btns_attrs - 1 else name)
+    if isinstance(func, tuple):
+      label.bind("<ButtonPress-1>", func[0])
+      label.bind("<B1-Motion>", func[1])
+      label.bind("<ButtonRelease-1>", func[2])
+    else:
+      label.bind("<Button-1>", func)
     label.grid(row=0, column=i)
   frame_btns.pack()
 
