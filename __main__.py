@@ -175,7 +175,11 @@ def main() -> None:
     thread = Thread(name="loop_request", target=loop_request, 
                     args=[cfg, local, full_codes, data_store, None])
     thread.start()
-    create_window(cfg, local, data_store)
+    try:
+      create_window(cfg, local, data_store)
+    except Exception:
+      traceback.print_exc()
+      os._exit(os.EX_OK)
   else:
     live_print: Live = prepare_live_print()
     loop_request(cfg, local, full_codes, data_store, live_print)
