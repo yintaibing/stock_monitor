@@ -285,9 +285,7 @@ def _listen_loop() -> None:
               str_name += gui_data_store.price_arrow_up if s.price > s.last_price else gui_data_store.price_arrow_down
             else:
               str_name += "-"
-          font_label_name = tkfont.Font(label_name, _font)
-          font_label_name.configure(underline=s == gui_data_store.show_trading_stock)
-          label_name.configure(text=str_name, font=font_label_name)
+          label_name.configure(text=str_name)
           label_price: tk.Label = frame_stock_groups.children[f"{s.code}price{count}"]
           label_price.configure(text=fraction_2(s.price))
           label_amp: tk.Label = frame_stock_groups.children[f"{s.code}amp{count}"]
