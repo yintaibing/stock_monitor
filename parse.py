@@ -1,6 +1,7 @@
 import requests
 
 from models import *
+from utils import more_than_wan
 
 # parse stock groups from local
 def parse_stock_groups_from_local(cfg: dict) -> list:
@@ -65,7 +66,25 @@ def parse_stock_infos(local: dict, data_store: DataStore, content: str) -> None:
       if not stock.name:
         stock.name = hide_stock_name(local, items[1])
         stock.last_day_price = float(items[4])
+        stock.init_price = float(items[5])
       if stock.price != None:
         stock.last_price = stock.price
       stock.price = float(items[3])
       stock.amplitude = float(items[32])
+      if stock == data_store.show_trading_stock:
+        stock.buys = items[9:19]
+        buy_sell_amount_to_wan(stock.buys)
+        stock.sells = items[19:29]
+        buy_sell_amount_to_wan(stock.sells)
+      else:
+        stock.buys = None
+        stock.sells = None
+
+
+# convert buy or sell amount to wan
+def buy_sell_amount_to_wan(ary) -> None:
+  for i in range(0, len(ary)):
+    if ary[i] == "0" or ary[i] == "0.00":
+      ary[i] = "-"
+    elif i % 2 != 0:
+      ary[i] = more_than_wan(int(ary[i])) if ary[i] else "-"

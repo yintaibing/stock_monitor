@@ -1,5 +1,6 @@
 import os
 import tkinter as tk
+from tkinter import font as tkfont
 
 from models import *
 from utils import fraction_2, seconds_to_hms
@@ -80,7 +81,7 @@ def _parse_theme_list() -> None:
     _theme = Theme()
 
 
-def _switch_theme(event) -> None:
+def _switch_theme(event: tk.Event) -> None:
   global _theme_list, _theme, _root
   if len(_theme_list) < 2:
     return
@@ -140,10 +141,10 @@ def _create_stock_groups_grids(frame: tk.Frame, data_store: DataStore) -> None:
                                 bg=_theme.bg_color, fg=_theme.font_color, font=_font)
     label_group_name.grid(row=0, column=col_name)
     label_group_price = tk.Label(frame, text="¥", 
-                                bg=_theme.bg_color, fg=_theme.font_color, font=_font)
+                                 bg=_theme.bg_color, fg=_theme.font_color, font=_font)
     label_group_price.grid(row=0, column=col_name + 1)
     label_group_amp = tk.Label(frame, text="%", 
-                                bg=_theme.bg_color, fg=_theme.font_color, font=_font)
+                               bg=_theme.bg_color, fg=_theme.font_color, font=_font)
     label_group_amp.grid(row=0, column=col_name + 2)
     
     for j in range(0, len(group.stocks)):
@@ -152,19 +153,94 @@ def _create_stock_groups_grids(frame: tk.Frame, data_store: DataStore) -> None:
       count: int = appear_count.get(s.code, 0)
       label_stock_name = tk.Label(frame, name=f"{s.code}name{count}", text=s.code, 
                                   bg=_theme.bg_color, fg=_theme.font_color, font=_font)
-      label_stock_name.grid(row=j + 1, column=col_name)
+      label_stock_name.grid(row=j + 1, column=col_name, sticky="e")
+      label_stock_name.bind("<Button-1>", _switch_trading)
       label_price = tk.Label(frame, name=f"{s.code}price{count}", text="-", 
                              bg=_theme.bg_color, fg=_theme.font_color, font=_font)
-      label_price.grid(row=j + 1, column=col_name + 1)
+      label_price.grid(row=j + 1, column=col_name + 1, sticky="e")
+      label_price.bind("<Button-1>", _switch_trading)
       label_amp = tk.Label(frame, name=f"{s.code}amp{count}", text="-", 
                            bg=_theme.bg_color, fg=_theme.font_color, font=_font)
-      label_amp.grid(row=j + 1, column=col_name + 2)
+      label_amp.grid(row=j + 1, column=col_name + 2, sticky="e")
+      label_amp.bind("<Button-1>", _switch_trading)
       appear_count[s.code] = count + 1
+
+
+def _set_stock_name_label_underline(stock: Stock, underline: bool) -> None:
+  global _font, _root
+  frame_stock_groups: tk.Frame = _root.children["frame_stock_groups"]
+  for i, (name, label_stock_name) in enumerate(frame_stock_groups.children.items()):
+    if name.startswith(stock.code):
+      font_label_stock_name = tkfont.Font(label_stock_name, _font)
+      font_label_stock_name.configure(underline=underline)
+      label_stock_name.configure(font=font_label_stock_name)
+      return
+
+
+def _switch_trading(event: tk.Event) -> None:
+  global _font, _theme, _root, gui_data_store
+  if not gui_data_store:
+    return
+  widget_full_name = str(event.widget)
+  stock_code = widget_full_name.split(".")[-1][0:6]
+  stock: Stock | None = None
+  for s in gui_data_store.all_stocks:
+    if s.code == stock_code:
+      stock = s
+      break
+  if not stock:
+    return
+  
+  frame_trading: tk.Frame | None = _root.children.get("frame_trading")
+  if frame_trading and stock == gui_data_store.show_trading_stock:
+    # showing this stock, destroy the trading frame
+    gui_data_store.show_trading_stock = None
+    _set_stock_name_label_underline(stock, False)
+    frame_trading.destroy()
+    
+  elif frame_trading:
+    # showing other stock, switch to this stock
+    if gui_data_store.show_trading_stock:
+      _set_stock_name_label_underline(gui_data_store.show_trading_stock, False)
+    gui_data_store.show_trading_stock = stock
+    _set_stock_name_label_underline(gui_data_store.show_trading_stock, False)
+    _update_trading_frame(frame_trading, stock)
+
+  else:
+    # not showing any stock, show the trading frame
+    gui_data_store.show_trading_stock = stock
+    _set_stock_name_label_underline(gui_data_store.show_trading_stock, True)
+    frame_trading = tk.Frame(_root, name="frame_trading")
+    frame_trading.configure(bg=_theme.bg_color)
+    for i in range(0, 2):
+      for j in range(0, 7):
+        label = tk.Label(frame_trading, name=f"label_trading{i}{j}",
+                         bg=_theme.bg_color, fg=_theme.font_color, font=_font,
+                         justify="left", padx=4)
+        label.grid(row=i, column=j)
+    frame_trading.pack()
+    _update_trading_frame(frame_trading, stock)
+
+
+def _update_trading_frame(frame_trading: tk.Frame, s: Stock) -> None:
+  global gui_data_store
+  label: tk.Label = frame_trading.children["label_trading00"]
+  label.configure(text=f"昨收\n{fraction_2(s.last_day_price)} #")
+  label = frame_trading.children["label_trading10"]
+  label.configure(text=f"{fraction_2(s.init_price)} #\n今开", fg=_colorize(gui_data_store, s))
+  for i in range(0, 5):
+    j = i * 2
+    # sells
+    label = frame_trading.children[f"label_trading0{i + 1}"]
+    label.configure(text=f"{s.sells[j + 1]}\n{s.sells[j]}" if s.sells else "-\n-")
+    # buys
+    label = frame_trading.children[f"label_trading1{i + 1}"]
+    label.configure(text=f"{s.buys[j]}\n{s.buys[j + 1]}" if s.buys else "-\n-")
 
 
 def _listen_loop() -> None:
   global _root, gui_data_store
-  if gui_data_store:
+  if gui_data_store and gui_data_store.is_updated_for_gui:
     # label of market status
     label_market_status: tk.Label = _root.children["label_market_status"]
     str_market_status: str
@@ -209,18 +285,25 @@ def _listen_loop() -> None:
               str_name += gui_data_store.price_arrow_up if s.price > s.last_price else gui_data_store.price_arrow_down
             else:
               str_name += "-"
-          label_name.configure(text=str_name)
+          font_label_name = tkfont.Font(label_name, _font)
+          font_label_name.configure(underline=s == gui_data_store.show_trading_stock)
+          label_name.configure(text=str_name, font=font_label_name)
           label_price: tk.Label = frame_stock_groups.children[f"{s.code}price{count}"]
           label_price.configure(text=fraction_2(s.price))
           label_amp: tk.Label = frame_stock_groups.children[f"{s.code}amp{count}"]
           label_amp.configure(text=fraction_2(s.amplitude), fg=_colorize(gui_data_store, s))
           count += 1
 
+    # frame of trading
+    frame_trading: tk.Frame | None = _root.children.get("frame_trading")
+    if frame_trading and gui_data_store.show_trading_stock:
+      _update_trading_frame(frame_trading, gui_data_store.show_trading_stock)
+
     # clear old data, and wait for new data in the next loop
     if gui_data_store.market_open or gui_data_store.seconds_to_market_open >= 0:
-      gui_data_store = None
+      gui_data_store.is_updated_for_gui = False
   
-  if not gui_data_store:
+  if not (gui_data_store and gui_data_store.is_updated_for_gui):
     _root.after(200, _listen_loop)
 
 
@@ -278,5 +361,6 @@ def create_window(cfg: dict, local: dict, data_store: DataStore) -> None:
 
 
 def set_gui_data_store(data_store: DataStore) -> None:
+  data_store.is_updated_for_gui = True
   global gui_data_store
   gui_data_store = data_store

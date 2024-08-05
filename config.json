@@ -9,8 +9,8 @@
     "cookie": "todo"
   },
   "colorize": true,
-  "interval_seconds": 3,
-  "price_arrows": "AV↑↓▲▼ʌvΛV",
+  "interval_seconds": 2,
+  "price_arrows": "ʌv↑↓AV▲▼ΛV",
   "gui": true,
   "gui_font_size": 10,
   "gui_theme": "dark",

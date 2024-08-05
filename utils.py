@@ -30,6 +30,15 @@ def add_sh_sz_prefix(stock_code: str) -> str:
 def fraction_2(num: float) -> str:
   return "{:.2f}".format(num)
 
+
+# if more than 10000, ellipse to x.yw
+def more_than_wan(num: int) -> str:
+  if num < 10000:
+    return str(num)
+  f = float(num) / 10000
+  return "{:.1f}".format(f) + "w"
+
+
 # format duration in seconds to hh:mm:ss
 def seconds_to_hms(seconds: int) -> str:
   h = int(seconds / 3600)

@@ -177,6 +177,8 @@ def main() -> None:
     thread.start()
     try:
       create_window(cfg, local, data_store)
+    except KeyboardInterrupt:
+      os._exit(os.EX_OK)
     except Exception:
       traceback.print_exc()
       os._exit(os.EX_OK)
