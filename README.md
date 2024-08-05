@@ -1,13 +1,15 @@
-### GUI窗口(可透明、置顶)/控制台，轮询展示行情
+### GUI窗口(可透明、置顶)/控制台，轮询展示行情，支持五档盘口
 ![screenshot_3](./screenshot_3.png)
+![screenshot_trading](./screenshot_trading.png)
 ![screenshot](./screenshot.png)
 ![screenshot_2](./screenshot_2.png)
 
 ### Features
 - 支持查询沪深京主要指数、个股、ETF，支持分组。
+- 支持五档盘口，点击个股即可展示(透明窗口时，点击会费点力，点击到不透明部分)。
 - 涨跌幅可配置红绿着色，也可不着色。
 - 开市时段，自动轮询，可配置轮询间隔。闭市时段，查询一次后结束。
-- GUI窗口模式下，可自定义颜色主题和字体大小，切换透明窗口、窗口置顶。。
+- GUI窗口模式下，可自定义颜色主题和字体大小，切换透明窗口、窗口置顶。
 - 控制台模式下，按`Ctrl + C`键退出。
 
 ### Usage
