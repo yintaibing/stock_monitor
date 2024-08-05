@@ -203,7 +203,7 @@ def _switch_trading(event: tk.Event) -> None:
     if gui_data_store.show_trading_stock:
       _set_stock_name_label_underline(gui_data_store.show_trading_stock, False)
     gui_data_store.show_trading_stock = stock
-    _set_stock_name_label_underline(gui_data_store.show_trading_stock, False)
+    _set_stock_name_label_underline(gui_data_store.show_trading_stock, True)
     _update_trading_frame(frame_trading, stock)
 
   else:
