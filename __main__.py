@@ -48,7 +48,7 @@ def check_market_status(now: datetime.datetime) -> int:
       if now.hour > 11 or (now.hour == 11 and now.minute > 30):
         # 11:30 ~ 12:59, lunch break
         return seconds_to_time_today(now, 13, 0)
-    if now.hour >= 15:
+    if now.hour > 15 or (now.hour == 15 and now.minute > 0):
       # after 15:00, market closed
       return -1
     return 0
