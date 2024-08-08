@@ -1,9 +1,12 @@
 import os
+from threading import Thread
 import tkinter as tk
 from tkinter import font as tkfont
+from PIL import Image, ImageFile, ImageTk
 
 from models import *
-from utils import fraction_2, seconds_to_hms
+from parse import get_stock_chart_image
+from utils import *
 
 _cfg: dict = None
 _font = ("宋体", 10)
@@ -16,6 +19,11 @@ _x: int = 0
 _y: int = 0
 _transparent_mode = False
 _topmost_mode = False
+
+CHART_TYPES = [("分时", "min"), ("日K", "daily"), ("周K", "weekly"), ("月K", "monthly"), ("关闭", "close")]
+_chart_type = "close"
+_chart_loading = False
+_chart_result = None
 
 
 def _destroy_window() -> None:
@@ -121,6 +129,13 @@ def _colorize(data_store: DataStore, stock: Stock) -> str:
   return _theme.font_color
 
 
+def _set_label_underline(label: tk.Label, underline: bool) -> None:
+  global _font
+  f = tkfont.Font(label, _font)
+  f.configure(underline=underline)
+  label.configure(font=f)
+
+
 def _create_market_indices_grids(frame: tk.Frame, data_store: DataStore) -> None:
   global _font, _theme
   for i in range(0, len(data_store.market_indices.stocks)):
@@ -167,18 +182,16 @@ def _create_stock_groups_grids(frame: tk.Frame, data_store: DataStore) -> None:
 
 
 def _set_stock_name_label_underline(stock: Stock, underline: bool) -> None:
-  global _font, _root
+  global _root
   frame_stock_groups: tk.Frame = _root.children["frame_stock_groups"]
   for i, (name, label_stock_name) in enumerate(frame_stock_groups.children.items()):
     if name.startswith(stock.code):
-      font_label_stock_name = tkfont.Font(label_stock_name, _font)
-      font_label_stock_name.configure(underline=underline)
-      label_stock_name.configure(font=font_label_stock_name)
+      _set_label_underline(label_stock_name, underline)
       return
 
 
 def _switch_trading(event: tk.Event) -> None:
-  global _font, _theme, _root, gui_data_store
+  global _font, _theme, _root, gui_data_store, _chart_type, _chart_loading, _chart_result
   if not gui_data_store:
     return
   widget_full_name = str(event.widget)
@@ -192,19 +205,32 @@ def _switch_trading(event: tk.Event) -> None:
     return
   
   frame_trading: tk.Frame | None = _root.children.get("frame_trading")
-  if frame_trading and stock == gui_data_store.show_trading_stock:
+  label_chart_image: tk.Label | None = _root.children.get("label_chart_image")
+  if stock == gui_data_store.show_trading_stock:
     # showing this stock, destroy the trading frame
     gui_data_store.show_trading_stock = None
     _set_stock_name_label_underline(stock, False)
-    frame_trading.destroy()
+    if frame_trading:
+      frame_trading.destroy()
+    if label_chart_image:
+      _chart_type = "close"
+      _chart_loading = False
+      _chart_result = None
+      label_chart_image.image = None
+      label_chart_image.destroy()
     
-  elif frame_trading:
+  elif frame_trading or label_chart_image:
     # showing other stock, switch to this stock
+    if _chart_loading:
+      return
     if gui_data_store.show_trading_stock:
       _set_stock_name_label_underline(gui_data_store.show_trading_stock, False)
     gui_data_store.show_trading_stock = stock
     _set_stock_name_label_underline(gui_data_store.show_trading_stock, True)
-    _update_trading_frame(frame_trading, stock)
+    if frame_trading:
+      _update_trading_frame(frame_trading, stock)
+    if _chart_type != "close":
+      _start_load_chart_image()
 
   else:
     # not showing any stock, show the trading frame
@@ -218,6 +244,15 @@ def _switch_trading(event: tk.Event) -> None:
                          bg=_theme.bg_color, fg=_theme.font_color, font=_font,
                          justify="left", padx=4)
         label.grid(row=i, column=j)
+    # chart type btns
+    global CHART_TYPES
+    for i, (text, chart_type) in enumerate(CHART_TYPES):
+      label = tk.Label(frame_trading, name=f"label_chart_{chart_type}", 
+                       bg="#e0e0e0", fg="#000", font=_font, text=text)
+      label.bind("<Button-1>", _click_chart_type)
+      if i == len(CHART_TYPES) - 1:
+        _set_label_underline(label, True)
+      label.grid(row=2, column=i + 1)
     frame_trading.pack()
     _update_trading_frame(frame_trading, stock)
 
@@ -236,6 +271,95 @@ def _update_trading_frame(frame_trading: tk.Frame, s: Stock) -> None:
     # buys
     label = frame_trading.children[f"label_trading1{i + 1}"]
     label.configure(text=f"{s.buys[j]}\n{s.buys[j + 1]}" if s.buys else "-\n-")
+
+
+def _set_chart_type_label_underline() -> None:
+  global _root, CHART_TYPES, _chart_type
+  frame_trading: tk.Frame | None = _root.children.get("frame_trading")
+  if frame_trading:
+    for chart_type in CHART_TYPES:
+      label = frame_trading.children[f"label_chart_{chart_type[1]}"]
+      _set_label_underline(label, chart_type[1] == _chart_type)
+
+
+def _click_chart_type(event: tk.Event) -> None:
+  global gui_data_store, _root, _chart_type, _chart_loading, _chart_result
+  if not gui_data_store:
+    return
+  widget_full_name = str(event.widget)
+  chart_type = widget_full_name.split("_")[-1]
+  if chart_type == "close":
+    _chart_type = chart_type
+    _chart_loading = False
+    _chart_result = None
+    _set_chart_type_label_underline()
+    label_chart_image: tk.Label | None = _root.children.get("label_chart_image")
+    if label_chart_image:
+      label_chart_image.image = None
+      label_chart_image.destroy()
+  elif chart_type == _chart_type:
+    _refresh_chart(None)
+  elif not _chart_loading:
+    _chart_type = chart_type
+    _set_chart_type_label_underline()
+    _start_load_chart_image()
+
+
+def _start_load_chart_image() -> None:
+  global _root, _chart_loading
+  label_chart_image: tk.Label | None = _root.children.get("label_chart_image")
+  if label_chart_image:
+    label_chart_image.image = None
+    label_chart_image.configure(text="Chart Loading", image="")
+  else:
+    label_chart_image = tk.Label(_root, name="label_chart_image", text="Chart Loading",
+                                 bg=_theme.bg_color, fg=_theme.font_color, font=_font)
+    label_chart_image.bind("<Button-1>", _refresh_chart)
+    label_chart_image.pack()
+  global _chart_loading
+  _chart_loading = True
+  _root.after(100, _listen_chart_loading)
+  Thread(target=_load_chart_image).start()
+
+
+def _refresh_chart(event: tk.Event | None) -> None:
+  global _chart_loading
+  if not _chart_loading:
+    _start_load_chart_image()
+
+  
+def _load_chart_image() -> None:
+  global _cfg, gui_data_store, _chart_type, _chart_result
+  image: ImageFile.ImageFile | None = None
+  failure_count = 0
+  while failure_count < 4 and gui_data_store.show_trading_stock and _chart_type != "close":
+    image = get_stock_chart_image(gui_data_store.show_trading_stock, _chart_type, _cfg["proxy"])
+    if not (gui_data_store.show_trading_stock and _chart_type != "close"):
+      return
+    if image:
+      _chart_result = image
+      return
+    else:
+      failure_count += 1
+  _chart_result = "Chart Load Failed"
+
+
+def _listen_chart_loading() -> None:
+  # label of chart image
+  global _root, _chart_loading, _chart_result
+  label_chart_image: tk.Label | None = _root.children.get("label_chart_image")
+  if label_chart_image:
+    if _chart_result:
+      if isinstance(_chart_result, Image.Image) or isinstance(_chart_result, ImageFile.ImageFile):
+        pil_image = ImageTk.PhotoImage(image=_chart_result)
+        label_chart_image.configure(text=None, image=pil_image)
+        label_chart_image.image = pil_image # save a reference of the image to avoid garbage collection
+      else:
+        label_chart_image.configure(text=str(_chart_result), image="")
+      _chart_loading = False
+      _chart_result = None
+    else:
+      _root.after(100, _listen_chart_loading)
 
 
 def _listen_loop() -> None:
@@ -326,7 +450,7 @@ def create_window(cfg: dict, local: dict, data_store: DataStore) -> None:
   }.items()
   len_btns_attrs = len(btns_attrs)
   for i, (name, func) in enumerate(btns_attrs):
-    label: tk.Label = tk.Label(frame_btns, bg="#e0e0e0",fg="#000", font=_font, 
+    label: tk.Label = tk.Label(frame_btns, bg="#e0e0e0", fg="#000", font=_font, 
                                text=f"{name} |" if i < len_btns_attrs - 1 else name)
     if isinstance(func, tuple):
       label.bind("<ButtonPress-1>", func[0])

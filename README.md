@@ -1,4 +1,4 @@
-### GUI窗口(可透明、置顶)/控制台，轮询展示行情，支持五档盘口
+### GUI窗口(可透明、置顶)/控制台，轮询展示行情，支持五档盘口、K线图
 ![screenshot_3](./screenshot_3.png)
 ![screenshot_trading](./screenshot_trading.png)
 ![screenshot](./screenshot.png)
@@ -13,7 +13,7 @@
 - 控制台模式下，按`Ctrl + C`键退出。
 
 ### Usage
-- 需要Python 3.7.0以上, `pip install`安装以下库：`requests`, `requests[socks]`, `rich`, `tkinter`。
+- 需要Python 3.7.0以上, `pip install`安装以下库：`requests`, `requests[socks]`, `rich`, `tkinter`, `pillow`。
 - 编辑`local.json`中的`stock_groups`，个股代码的sh/sz/bj前缀建议加、也可不加。
 - 启动方式一：双击`double_click_to_run.bat`运行。
 - 启动方式二：用命令行终端运行本仓库即可，比如Windows的cmd或Powershell。   

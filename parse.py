@@ -1,7 +1,9 @@
 import requests
+from io import BytesIO
+from PIL import Image, ImageFile
 
 from models import *
-from utils import more_than_wan
+from utils import more_than_wan, add_sh_sz_prefix
 
 # parse stock groups from local
 def parse_stock_groups_from_local(cfg: dict) -> list:
@@ -14,10 +16,10 @@ def parse_stock_groups_from_local(cfg: dict) -> list:
 
 
 # get stock info
-def get_stock_infos(stock_codes: str, proxy: dict, timeout: float) -> str:
+def get_stock_infos(stock_codes: str, proxy: dict, data_store: DataStore) -> str:
   url = f"https://qt.gtimg.cn/q={stock_codes}"
   try:
-    response = requests.get(url, proxies=proxy, timeout=timeout)
+    response = requests.get(url, proxies=proxy, timeout=data_store.interval_seconds * 3)
     if response.status_code == 200:
       charset = response.headers["Content-Type"].split(";")[1]
       encoding = charset.split("=")[1]
@@ -71,6 +73,7 @@ def parse_stock_infos(local: dict, data_store: DataStore, content: str) -> None:
         stock.last_price = stock.price
       stock.price = float(items[3])
       stock.amplitude = float(items[32])
+      # trading stock
       if stock == data_store.show_trading_stock:
         stock.buys = items[9:19]
         buy_sell_amount_to_wan(stock.buys)
@@ -88,3 +91,21 @@ def buy_sell_amount_to_wan(ary) -> None:
       ary[i] = "-"
     elif i % 2 != 0:
       ary[i] = more_than_wan(int(ary[i])) if ary[i] else "-"
+
+
+# get stock chart image
+def get_stock_chart_image(stock: Stock, chart_type: str, proxy: dict) -> (ImageFile.ImageFile | Image.Image) | None:
+  url = f"https://image.sinajs.cn/newchart/{chart_type}/n/{add_sh_sz_prefix(stock.code)}.gif"
+  try:
+    response = requests.get(url, proxies=proxy, timeout=10)
+    if response.status_code == 200:
+      image = Image.open(fp=BytesIO(response.content))
+      if image.mode != "RGB":
+        image = image.convert("RGB")
+      scale = 0.6
+      new_size = (int(image.width * scale), int(image.height * scale))
+      image.thumbnail(size=new_size, reducing_gap=3)
+      return image
+  except Exception as e:
+    print(e)
+  return None

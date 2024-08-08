@@ -78,7 +78,7 @@ def loop_request(cfg: dict, local: dict, full_codes: str,
           continue
         
         # request stock infos
-        stock_info_content = get_stock_infos(full_codes, cfg["proxy"], data_store.interval_seconds * 2)
+        stock_info_content = get_stock_infos(full_codes, cfg["proxy"], data_store)
         
         # if request failed more than 10 times, terminate
         if not stock_info_content:
