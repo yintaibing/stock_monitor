@@ -1,5 +1,4 @@
 ### GUI窗口(可透明、置顶)/控制台，轮询展示行情，支持五档盘口、K线图
-![screenshot_3](./screenshot_3.png)
 ![screenshot_trading](./screenshot_trading.png)
 ![screenshot](./screenshot.png)
 ![screenshot_2](./screenshot_2.png)
